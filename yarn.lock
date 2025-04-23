@@ -2033,6 +2033,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ieee754@npm:^1.1.8":
+  version: 1.2.1
+  resolution: "ieee754@npm:1.2.1"
+  checksum: 10c0/b0782ef5e0935b9f12883a2e2aa37baa75da6e66ce6515c168697b42160807d9330de9a32ec1ed73149aea02e0d822e572bca6f1e22bdcbd2149e13b050b17bb
+  languageName: node
+  linkType: hard
+
 "ignore@npm:^5.2.0, ignore@npm:^5.3.1":
   version: 5.3.2
   resolution: "ignore@npm:5.3.2"
@@ -3117,6 +3124,8 @@ __metadata:
     esbuild: "npm:^0.25.3"
     eslint: "npm:^9.25.1"
     npm-run-all: "npm:^4.1.5"
+    py-marshal: "npm:^1.0.5"
+    reckless-node-perforce: "npm:^1.0.6"
     typescript: "npm:^5.8.3"
   languageName: unknown
   linkType: soft
@@ -3196,6 +3205,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"py-marshal@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "py-marshal@npm:1.0.5"
+  dependencies:
+    ieee754: "npm:^1.1.8"
+  checksum: 10c0/688387766726c2a21ba7c37b93a049c6a62f011d241bbc374a7b25b3034c6b4f6e5a74f0b2129a0fbc95e5872fcea02f0bf33d8985cc2614999d00b8b655f4f9
+  languageName: node
+  linkType: hard
+
 "queue-microtask@npm:^1.2.2":
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
@@ -3244,6 +3262,13 @@ __metadata:
   dependencies:
     picomatch: "npm:^2.2.1"
   checksum: 10c0/6fa848cf63d1b82ab4e985f4cf72bd55b7dcfd8e0a376905804e48c3634b7e749170940ba77b32804d5fe93b3cc521aa95a8d7e7d725f830da6d93f3669ce66b
+  languageName: node
+  linkType: hard
+
+"reckless-node-perforce@npm:^1.0.6":
+  version: 1.0.6
+  resolution: "reckless-node-perforce@npm:1.0.6"
+  checksum: 10c0/b1af16165970c74d4b3540ed517aaa9f58c8d6f786255c0d5eb96f5b12a65d93c330c983ee5651ad66684eda137e4cb9c91fe14b75ad1bc564ff4ce96b1bc6da
   languageName: node
   linkType: hard
 
