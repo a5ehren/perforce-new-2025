@@ -44,15 +44,15 @@
     "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "lint-fix": "eslint src --fix",
+    "test": "yarn run pretest && vscode-test",
+    "clean": "rm -rf out"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.10",
     "@types/node": "^20.17.30",
     "@types/vscode": "~1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@typescript-eslint/parser": "^8.31.0",
-    "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.5.2",
     "esbuild": "^0.25.3",
     "eslint": "^9.25.1",

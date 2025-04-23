@@ -600,28 +600,28 @@ export class PerforceSCMProvider implements vscode.Disposable {
             const info: Partial<P4Info> = {}; // Use Partial to build the object
 
             const userNameMatch = stdout.match(/^User name:\s*(.*)$/im);
-            if (userNameMatch) info.userName = userNameMatch[1].trim();
+            if (userNameMatch) {info.userName = userNameMatch[1].trim();}
 
             const clientNameMatch = stdout.match(/^Client name:\s*(.*)$/im);
-            if (clientNameMatch) info.clientName = clientNameMatch[1].trim();
+            if (clientNameMatch) {info.clientName = clientNameMatch[1].trim();}
 
             const clientHostMatch = stdout.match(/^Client host:\s*(.*)$/im);
-            if (clientHostMatch) info.clientHost = clientHostMatch[1].trim();
+            if (clientHostMatch) {info.clientHost = clientHostMatch[1].trim();}
 
             const clientRootMatch = stdout.match(/^Client root:\s*(.*)$/im);
-            if (clientRootMatch) info.clientRoot = clientRootMatch[1].trim();
+            if (clientRootMatch) {info.clientRoot = clientRootMatch[1].trim();}
 
             const serverAddressMatch = stdout.match(/^Server address:\s*(.*)$/im);
-            if (serverAddressMatch) info.serverAddress = serverAddressMatch[1].trim();
+            if (serverAddressMatch) {info.serverAddress = serverAddressMatch[1].trim();}
 
             const serverVersionMatch = stdout.match(/^Server version:\s*(.*)$/im);
-            if (serverVersionMatch) info.serverVersion = serverVersionMatch[1].trim();
+            if (serverVersionMatch) {info.serverVersion = serverVersionMatch[1].trim();}
             
             const serverLicenseMatch = stdout.match(/^Server license:\s*(.*)$/im);
-            if (serverLicenseMatch) info.serverLicense = serverLicenseMatch[1].trim();
+            if (serverLicenseMatch) {info.serverLicense = serverLicenseMatch[1].trim();}
             
             const caseHandlingMatch = stdout.match(/^Case Handling:\s*(.*)$/im);
-            if (caseHandlingMatch) info.caseHandling = caseHandlingMatch[1].trim();
+            if (caseHandlingMatch) {info.caseHandling = caseHandlingMatch[1].trim();}
 
             // Validate required fields
             if (!info.userName || !info.clientName) {

@@ -1119,10 +1119,10 @@ async function updateStatusBarItem(): Promise<void> {
                     `User: ${info.userName}`,
                     `Client: ${info.clientName}`
                 ];
-                if (info.clientHost) tooltipLines.push(`Host: ${info.clientHost}`);
-                if (info.clientRoot) tooltipLines.push(`Root: ${info.clientRoot}`);
-                if (info.serverAddress) tooltipLines.push(`Server: ${info.serverAddress}`);
-                if (info.serverVersion) tooltipLines.push(`Version: ${info.serverVersion}`);
+                if (info.clientHost) {tooltipLines.push(`Host: ${info.clientHost}`);}
+                if (info.clientRoot) {tooltipLines.push(`Root: ${info.clientRoot}`);}
+                if (info.serverAddress) {tooltipLines.push(`Server: ${info.serverAddress}`);}
+                if (info.serverVersion) {tooltipLines.push(`Version: ${info.serverVersion}`);}
                 p4StatusBarItem.tooltip = tooltipLines.join('\n');
 
                 // TODO: Define a command to show this info easily?
