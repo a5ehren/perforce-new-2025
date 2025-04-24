@@ -305,7 +305,7 @@ export class RepositoryStateManager implements vscode.Disposable {
              }
 
              // Use depotPath for the placeholder URI path uniqueness, clientPath is stored separately
-             const placeholderUri = vscode.Uri.parse(`perforce:${record.depotPath}`);
+             const placeholderUri = vscode.Uri.parse(`perforce:${record.depotFile}`);
 
              const file: P4File = {
                  uri: placeholderUri, // Use placeholder URI
@@ -369,8 +369,8 @@ export class RepositoryStateManager implements vscode.Disposable {
                 files: [], // Files will be added by updateFiles/describe
                 // jobs: record.jobs, // Assuming jobs field exists if needed
                 // isShelved: record.status === 'shelved', // Check if 'shelved' is a possible status from `p4 changes`
-                 hasShelvedFiles: record.shelved === '1', // Heuristic: check if 'shelved' field exists and is '1' (needs verification)
-                 isRestricted: record.changeType?.includes('restricted'), // Heuristic: check changeType (needs verification)
+                 hasShelvedFiles: record.shelved === '1',
+                 isRestricted: record.changeType?.includes('restricted') ?? false,
             };
             changes.push(changelist);
         }
@@ -449,17 +449,15 @@ export class RepositoryStateManager implements vscode.Disposable {
             const clientFile = record.clientFile;
             const depotFile = record.depotFile;
 
-            // Need a unique identifier for the placeholder URI.
-            // Prefer clientFile if available, fallback to depotFile (e.g., for needsDelete)
-            // If neither exists, we cannot create a meaningful placeholder.
-            const pathForUri = clientFile || depotFile;
+            // *** CHANGE HERE: Prioritize depotFile for placeholder URI uniqueness ***
+            const pathForUri = depotFile || clientFile; // Use depotFile if it exists, otherwise fallback to clientFile
             if (!pathForUri) {
                  this.outputChannel.appendLine(`Warning: Skipping status record missing both clientFile and depotFile: ${JSON.stringify(record)}`);
                  continue;
             }
 
             // Use a consistent scheme, use the chosen path for uniqueness
-            const placeholderUri = vscode.Uri.parse(`perforce:${pathForUri}`);
+            const placeholderUri = vscode.Uri.parse(`perforce:${pathForUri}`); // Use the prioritized path
 
             // Determine the effective status/action - p4 status combines things
             let effectiveStatus = record.status ?? 'unknown';

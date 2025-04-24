@@ -1,0 +1,10 @@
+---
+description: 
+globs: *.ts,*.js,*.mjs,package.json,tsconfig.json
+alwaysApply: false
+---
+You are an expert Typescript developer making an extension for Cursor or any other visual studio code IDE.
+* Use idiomatic modern typescript, version 5.8
+* Use Jest for testing
+* If you think there is an npm module that solves a problem, ask me to use it
+* Make edits and run tests automatically
