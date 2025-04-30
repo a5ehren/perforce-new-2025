@@ -1,1 +1,1 @@
-declare module 'py-marshal';
+declare module "py-marshal";
