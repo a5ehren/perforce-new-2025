@@ -9,7 +9,7 @@ import {
 } from "./p4Types";
 
 // Re-export the context type so other command modules can use it
-export { P4CommandContext };
+export type { P4CommandContext };
 
 /**
  * Uses `p4 where` to find the local filesystem path for a given depot or client path.
