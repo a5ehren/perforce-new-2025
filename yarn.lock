@@ -5296,7 +5296,6 @@ __metadata:
     npm-run-all: "npm:^4.1.5"
     prettier: "npm:^3.5.3"
     py-marshal: "npm:^1.0.5"
-    reckless-node-perforce: "npm:^1.0.11"
     ts-jest: "npm:^29.3.2"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.8.3"
@@ -5545,13 +5544,6 @@ __metadata:
   version: 4.1.2
   resolution: "readdirp@npm:4.1.2"
   checksum: 10c0/60a14f7619dec48c9c850255cd523e2717001b0e179dc7037cfa0895da7b9e9ab07532d324bfb118d73a710887d1e35f79c495fa91582784493e085d18c72c62
-  languageName: node
-  linkType: hard
-
-"reckless-node-perforce@npm:^1.0.11":
-  version: 1.0.11
-  resolution: "reckless-node-perforce@npm:1.0.11"
-  checksum: 10c0/c2ed373e92fe3dceaad4de037853a37c2f4144c9861c979fde256d36b2feb7a585f6966df089c55f767179553ade89fe8b4bd6a61dd3a54a0a97f20f968ee43c
   languageName: node
   linkType: hard
 

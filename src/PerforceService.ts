@@ -1,89 +1,11 @@
 import * as vscode from "vscode";
-import p4 from "reckless-node-perforce"; // Assuming default import
+import * as childProcess from "child_process";
 const marshal = require("py-marshal"); // Import the parser library
-// import { P4Executable } from 'reckless-node-perforce/dist/p4executable'; // Need to check actual path/types
 
 // Import necessary types from the new file
 import { P4Options, P4Result } from "./p4/p4Types";
 // Import the specific command and context we need
 import { p4where, P4CommandContext } from "./p4/fileCommands";
-
-// REMOVE Interfaces that conflict with ./p4/p4Types
-/*
-export interface P4Options {
-    cwd?: string;
-    P4CLIENT?: string;
-    P4USER?: string;
-    P4PORT?: string;
-    P4PASSWD?: string;
-    P4CHARSET?: string;
-    P4CONFIG?: string; // Path to P4CONFIG file
-    p4Path?: string;   // Path to p4 executable
-    // Add other relevant P4 environment variables if needed
-}
-*/
-
-/*
-export interface P4Result {
-    stdout: string;
-    stderr: string;
-    // Potentially add parsed data later (e.g., parsed JSON from -G)
-    parsedOutput?: any; 
-}
-*/
-
-// REMOVE other local interfaces likely defined in p4Types or specific command files
-/*
-export interface P4OpenedFile {
-    depotFile: string;
-    clientFile?: string; // May not always be present?
-    rev?: string;       // Revision opened (# or head)
-    haveRev?: string;    // Revision on workspace
-    action: string;     // e.g., edit, add, delete, integrate
-    change: string;     // 'default' or changelist number
-    type: string;       // Perforce file type (e.g., text, binary)
-    user?: string;      // User who opened the file
-    client?: string;    // Workspace where file is opened
-    // Add other potentially useful fields if they appear in -G output
-}
-*/
-
-/*
-export interface P4StatusFile {
-    depotFile?: string; // May not be present for adds not submitted
-    clientFile: string;
-    status: string; // Action like 'add', 'edit', 'delete', 'branch', 'integrate'
-    change?: string; // Changelist number or 'default'
-    type?: string;   // File type
-    ourLock?: boolean; // If the current client has the file locked
-    otherLock?: string[]; // List of users/clients holding locks
-    // add other relevant fields from p4 status -G
-}
-*/
-
-/*
-export interface P4Annotation {
-    line: number;
-    change: string; // Changelist number
-    user?: string;   // Optional: from -c flag
-    client?: string; // Optional: from -c flag
-    date?: string;   // Optional: from -c flag
-}
-*/
-
-/*
-export interface P4FilelogEntry {
-    rev: string;
-    change: string;
-    action: string;
-    date: string; // Typically epoch time
-    user: string;
-    client: string;
-    desc: string; // Description of the change
-    type: string; // File type
-    // Potentially add integration history if needed (using -i flag)
-}
-*/
 
 export class PerforceService implements vscode.Disposable {
   private outputChannel: vscode.OutputChannel;
@@ -139,32 +61,14 @@ export class PerforceService implements vscode.Disposable {
       requiresPythonParsing = true;
     }
 
-    // Combine specific options with defaults, ensuring no undefined values are passed if the library doesn't handle them
-    const commandOptions: any = {
-      cwd: options.cwd,
-      p4Path: options.p4Path ?? this.p4PathSetting, // Allow per-call override, else use config
-      P4CLIENT: options.P4CLIENT,
-      P4USER: options.P4USER,
-      P4PORT: options.P4PORT,
-      P4PASSWD: options.P4PASSWD,
-      P4CHARSET: options.P4CHARSET,
-      P4CONFIG: options.P4CONFIG,
-      // Add stdin handling if the library supports it
-      // stdin: input
-    };
-
-    // Clean up undefined properties as reckless-node-perforce might pass them to spawn
-    Object.keys(commandOptions).forEach(
-      (key) => commandOptions[key] === undefined && delete commandOptions[key],
-    );
-
     try {
-      // Assume reckless-node-perforce main export is the function call
-      // Need to verify if it accepts stdin
-      // NOTE: reckless-node-perforce needs to return stdout as a Buffer for marshal parsing
-      // If it returns a string, encoding issues might occur. Let's assume it can return a Buffer
-      // or that the string conversion is lossless for the relevant byte range.
-      const result = await p4(command, effectiveArgs, commandOptions);
+      const result = await this.spawnP4Process(
+        command,
+        effectiveArgs,
+        options,
+        useTaggedOutput,
+        input,
+      );
 
       const stdout = result.stdout ?? ""; // Assuming string for now
       const stderr = result.stderr ?? "";
@@ -193,14 +97,146 @@ export class PerforceService implements vscode.Disposable {
 
       return p4Result;
     } catch (error: any) {
-      // reckless-node-perforce rejects on non-zero exit code or spawn errors
       const stderr =
         error?.stderr ??
         (error instanceof Error ? error.message : String(error));
       this.logError(command, args, stderr);
-      // Re-throw a structured error? Or let the caller handle it?
       throw new Error(`P4 command '${command}' failed: ${stderr}`);
     }
+  }
+
+  /**
+   * Spawns a p4 process to run a command directly using Node.js child_process.
+   * Unlike execute which uses an external library, this method directly spawns the process.
+   * 
+   * @param command The p4 command (e.g., 'edit', 'info')
+   * @param args Array of arguments for the command
+   * @param options P4 environment options (P4USER, P4CLIENT, etc.) and cwd
+   * @param useTaggedOutput If true, adds -G flag for tagged output
+   * @param input Optional standard input to pass to the p4 command
+   * @returns A promise that resolves to a P4Result object
+   */
+  public async spawnP4Process(
+    command: string,
+    args: string[] = [],
+    options: P4Options = {},
+    useTaggedOutput = false,
+    input?: string,
+  ): Promise<P4Result> {
+    // Log the command being executed
+    this.logCommand(command, args, options, input);
+
+    // Copy args to avoid modifying the original array
+    const effectiveArgs = [...args];
+    let requiresPythonParsing = false;
+
+    // Add -G flag for tagged output if requested
+    if (useTaggedOutput) {
+      effectiveArgs.unshift("-G");
+      requiresPythonParsing = true;
+    }
+
+    // Determine the p4 executable path
+    const p4Path = options.p4Path || this.p4PathSetting || "p4";
+
+    // Prepare environment variables for the child process
+    const env = { ...process.env }; // Start with current environment
+    
+    // Add Perforce-specific environment variables from options
+    if (options.P4CLIENT) env.P4CLIENT = options.P4CLIENT;
+    if (options.P4USER) env.P4USER = options.P4USER;
+    if (options.P4PORT) env.P4PORT = options.P4PORT;
+    if (options.P4PASSWD) env.P4PASSWD = options.P4PASSWD;
+    if (options.P4CHARSET) env.P4CHARSET = options.P4CHARSET;
+    if (options.P4CONFIG) env.P4CONFIG = options.P4CONFIG;
+
+    // Full command arguments array with command as the first argument
+    const fullArgs = [command, ...effectiveArgs];
+
+    return new Promise<P4Result>((resolve, reject) => {
+      try {
+        // Spawn the p4 process
+        const proc = childProcess.spawn(p4Path, fullArgs, {
+          cwd: options.cwd,
+          env: env,
+          stdio: ['pipe', 'pipe', 'pipe'] // stdin, stdout, stderr
+        });
+
+        // Buffers to collect stdout and stderr
+        const stdoutChunks: Buffer[] = [];
+        const stderrChunks: Buffer[] = [];
+
+        // Collect stdout data
+        proc.stdout.on('data', (data) => {
+          stdoutChunks.push(Buffer.from(data));
+        });
+
+        // Collect stderr data
+        proc.stderr.on('data', (data) => {
+          stderrChunks.push(Buffer.from(data));
+        });
+
+        // Handle process exit
+        proc.on('close', (code) => {
+          // Convert collected buffers to strings
+          const stdout = Buffer.concat(stdoutChunks).toString('utf8');
+          const stderr = Buffer.concat(stderrChunks).toString('utf8');
+          
+          // Log the output
+          this.logOutput(stdout, stderr);
+
+          // Create the result object
+          const p4Result: P4Result = { stdout, stderr };
+
+          // Handle non-zero exit codes as errors
+          if (code !== 0) {
+            const errorMessage = `P4 command '${command}' failed with exit code ${code}`;
+            this.logError(command, effectiveArgs, stderr || errorMessage);
+            reject(new Error(`${errorMessage}: ${stderr}`));
+            return;
+          }
+
+          // Parse tagged output if requested
+          if (requiresPythonParsing && stdout) {
+            try {
+              p4Result.parsedOutput = this.parseTaggedOutput(stdout);
+              if (this.debugMode) {
+                this.outputChannel.appendLine(
+                  `Parsed Tagged Output (${command}): ${JSON.stringify(p4Result.parsedOutput, null, 2).substring(0, 1000)}...`
+                );
+              }
+            } catch (parseError: any) {
+              this.outputChannel.appendLine(
+                `Error parsing tagged output for command '${command}': ${parseError.message}`
+              );
+              console.error("Tagged output parse error:", parseError);
+              // Continue with the raw output
+            }
+          }
+
+          resolve(p4Result);
+        });
+
+        // Handle process errors
+        proc.on('error', (err) => {
+          const errorMessage = `Error spawning p4 process: ${err.message}`;
+          this.logError(command, effectiveArgs, errorMessage);
+          reject(new Error(errorMessage));
+        });
+
+        // Write to stdin if input is provided
+        if (input) {
+          proc.stdin.write(input);
+          proc.stdin.end();
+        } else {
+          proc.stdin.end();
+        }
+      } catch (error: any) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logError(command, effectiveArgs, errorMessage);
+        reject(new Error(`Failed to spawn p4 process: ${errorMessage}`));
+      }
+    });
   }
 
   /**
@@ -252,7 +288,6 @@ export class PerforceService implements vscode.Disposable {
     this.outputChannel.appendLine("Attempting p4 login...");
     try {
       // Execute p4 login. If a password is provided, pass it as stdin.
-      // Note: relies on reckless-node-perforce and p4 handling stdin correctly.
       const result = await this.execute("login", [], options, false, password);
       if (result.stderr && !result.stderr.includes("User logged in")) {
         // Handle cases where login command succeeds (exit 0) but might show warnings
@@ -352,11 +387,6 @@ export class PerforceService implements vscode.Disposable {
 
     try {
       // Convert the string stdout to a Buffer for the marshal parser.
-      // IMPORTANT: Assuming the string encoding (e.g., from reckless-node-perforce)
-      // correctly represents the raw bytes from the marshal data.
-      // If reckless-node-perforce can provide a Buffer directly, that would be safer.
-      // Let's assume UTF-8 is problematic and try Latin1 (ISO-8859-1) as it maps
-      // byte values 0-255 directly to Unicode code points U+0000 to U+00FF.
       const buffer = Buffer.from(stdout, "latin1");
 
       // Use the python-marshal library to load the data
@@ -372,7 +402,6 @@ export class PerforceService implements vscode.Disposable {
         "Input string (first 500 chars):",
         stdout.substring(0, 500),
       );
-      // Re-throw the error to be caught by the execute method's catch block
       throw new Error(
         `Failed to parse marshalled Python output: ${error.message}`,
       );
