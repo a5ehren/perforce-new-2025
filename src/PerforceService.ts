@@ -108,7 +108,7 @@ export class PerforceService implements vscode.Disposable {
   /**
    * Spawns a p4 process to run a command directly using Node.js child_process.
    * Unlike execute which uses an external library, this method directly spawns the process.
-   * 
+   *
    * @param command The p4 command (e.g., 'edit', 'info')
    * @param args Array of arguments for the command
    * @param options P4 environment options (P4USER, P4CLIENT, etc.) and cwd
@@ -141,7 +141,7 @@ export class PerforceService implements vscode.Disposable {
 
     // Prepare environment variables for the child process
     const env = { ...process.env }; // Start with current environment
-    
+
     // Add Perforce-specific environment variables from options
     if (options.P4CLIENT) env.P4CLIENT = options.P4CLIENT;
     if (options.P4USER) env.P4USER = options.P4USER;
@@ -159,7 +159,7 @@ export class PerforceService implements vscode.Disposable {
         const proc = childProcess.spawn(p4Path, fullArgs, {
           cwd: options.cwd,
           env: env,
-          stdio: ['pipe', 'pipe', 'pipe'] // stdin, stdout, stderr
+          stdio: ["pipe", "pipe", "pipe"], // stdin, stdout, stderr
         });
 
         // Buffers to collect stdout and stderr
@@ -167,21 +167,21 @@ export class PerforceService implements vscode.Disposable {
         const stderrChunks: Buffer[] = [];
 
         // Collect stdout data
-        proc.stdout.on('data', (data) => {
+        proc.stdout.on("data", (data) => {
           stdoutChunks.push(Buffer.from(data));
         });
 
         // Collect stderr data
-        proc.stderr.on('data', (data) => {
+        proc.stderr.on("data", (data) => {
           stderrChunks.push(Buffer.from(data));
         });
 
         // Handle process exit
-        proc.on('close', (code) => {
+        proc.on("close", (code) => {
           // Convert collected buffers to strings
-          const stdout = Buffer.concat(stdoutChunks).toString('utf8');
-          const stderr = Buffer.concat(stderrChunks).toString('utf8');
-          
+          const stdout = Buffer.concat(stdoutChunks).toString("utf8");
+          const stderr = Buffer.concat(stderrChunks).toString("utf8");
+
           // Log the output
           this.logOutput(stdout, stderr);
 
@@ -202,12 +202,12 @@ export class PerforceService implements vscode.Disposable {
               p4Result.parsedOutput = this.parseTaggedOutput(stdout);
               if (this.debugMode) {
                 this.outputChannel.appendLine(
-                  `Parsed Tagged Output (${command}): ${JSON.stringify(p4Result.parsedOutput, null, 2).substring(0, 1000)}...`
+                  `Parsed Tagged Output (${command}): ${JSON.stringify(p4Result.parsedOutput, null, 2).substring(0, 1000)}...`,
                 );
               }
             } catch (parseError: any) {
               this.outputChannel.appendLine(
-                `Error parsing tagged output for command '${command}': ${parseError.message}`
+                `Error parsing tagged output for command '${command}': ${parseError.message}`,
               );
               console.error("Tagged output parse error:", parseError);
               // Continue with the raw output
@@ -218,7 +218,7 @@ export class PerforceService implements vscode.Disposable {
         });
 
         // Handle process errors
-        proc.on('error', (err) => {
+        proc.on("error", (err) => {
           const errorMessage = `Error spawning p4 process: ${err.message}`;
           this.logError(command, effectiveArgs, errorMessage);
           reject(new Error(errorMessage));
@@ -232,7 +232,8 @@ export class PerforceService implements vscode.Disposable {
           proc.stdin.end();
         }
       } catch (error: any) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         this.logError(command, effectiveArgs, errorMessage);
         reject(new Error(`Failed to spawn p4 process: ${errorMessage}`));
       }
