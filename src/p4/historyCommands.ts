@@ -25,8 +25,7 @@ export async function p4annotate(
   context.outputChannel.appendLine(`Executing \`${commandDesc}\`...`);
 
   try {
-    // Annotate does not support -G
-    const result = await context.execute("annotate", args, options, false);
+    const result = await context.execute("annotate", args, options);
 
     if (result.stderr) {
       // Annotate might report errors like "no such file"
@@ -123,7 +122,7 @@ export async function p4filelog(
     // Use tagged output (-G)
     // Remove filePath from args array as it's passed separately to execute
     const cmdArgs = effectiveArgs.filter((arg) => arg !== filePath);
-    const result = await context.execute("filelog", cmdArgs, options, true); // Pass true for useTaggedOutput
+    const result = await context.execute("filelog", cmdArgs, options);
 
     if (result.stderr) {
       context.outputChannel.appendLine(

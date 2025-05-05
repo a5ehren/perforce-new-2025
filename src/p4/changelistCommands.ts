@@ -22,7 +22,7 @@ export async function p4newChangeSpec(
   try {
     // -o outputs the spec to stdout
     // No tagged output
-    const result = await context.execute("change", ["-o"], options, false);
+    const result = await context.execute("change", ["-o"], options);
 
     if (result.stderr) {
       // Log stderr as warning/info, but stdout should still have the spec
@@ -69,12 +69,7 @@ export async function p4editChangeSpec(
   );
   try {
     // -o outputs the spec to stdout
-    const result = await context.execute(
-      "change",
-      ["-o", changelist],
-      options,
-      false,
-    );
+    const result = await context.execute("change", ["-o", changelist], options);
 
     if (result.stderr) {
       context.outputChannel.appendLine(
@@ -128,13 +123,7 @@ export async function p4saveChangeSpec(
   context.outputChannel.appendLine("Executing `p4 change -i`...");
   try {
     // Pass the spec string as standard input
-    const result = await context.execute(
-      "change",
-      ["-i"],
-      options,
-      false,
-      specString,
-    );
+    const result = await context.execute("change", ["-i"], options);
 
     // Successful save typically outputs "Change X created." or "Change X updated." to stdout.
     // Stderr might contain warnings or info, e.g., about file validation.
@@ -205,7 +194,7 @@ export async function p4submit(
 
   try {
     // Submit doesn't typically use tagged output, but output can be complex (locking, triggers, errors)
-    const result = await context.execute("submit", args, options, false);
+    const result = await context.execute("submit", args, options);
 
     // Submit output varies greatly depending on success, failure, triggers, etc.
     // Successful submit usually indicates submitted change number in stderr/stdout.
@@ -271,7 +260,7 @@ export async function p4submit(
 }
 
 /**
- * Describes a pending or submitted changelist. Uses `p4 describe -G <changelist>`.
+ * Describes a pending or submitted changelist. Uses `p4 describe <changelist>`.
  * (Formerly PerforceService.describe)
  * @param context Object containing execute function and outputChannel.
  * @param changelist The changelist number to describe.
@@ -286,17 +275,11 @@ export async function p4describe(
   if (!changelist) {
     throw new Error("Changelist number must be provided for p4 describe.");
   }
-  const commandDesc = `p4 describe -G ${changelist}`;
+  const commandDesc = `p4 describe ${changelist}`;
   context.outputChannel.appendLine(`Executing \`${commandDesc}\`...`);
 
   try {
-    // Use tagged output (-G) for easier parsing
-    const result = await context.execute(
-      "describe",
-      [changelist],
-      options,
-      true,
-    );
+    const result = await context.execute("describe", [changelist], options);
 
     if (result.stderr) {
       context.outputChannel.appendLine(
@@ -315,7 +298,7 @@ export async function p4describe(
 
     // The parsedOutput should contain the structured changelist data
     if (result.parsedOutput) {
-      // p4 describe -G usually returns a single object (or a list with one object)
+      // p4 describe usually returns a single object (or a list with one object)
       const descriptionData = Array.isArray(result.parsedOutput)
         ? result.parsedOutput[0]
         : result.parsedOutput;
@@ -327,7 +310,7 @@ export async function p4describe(
     } else {
       // Should not happen if command succeeded and stderr didn't indicate failure
       throw new Error(
-        `p4 describe -G ${changelist} succeeded but produced no parsed output.`,
+        `p4 describe ${changelist} succeeded but produced no parsed output.`,
       );
     }
   } catch (error: any) {
@@ -351,7 +334,7 @@ export async function p4changes(
   options: P4Options = {},
   args: string[] = [],
 ): Promise<P4ChangeSummary[]> {
-  // Ensure -G is always used for parsing, add it if not present in custom args
+  // Ensure is always used for parsing, add it if not present in custom args
   const effectiveArgs = [...args];
   if (!effectiveArgs.includes("-G")) {
     effectiveArgs.unshift("-G");
@@ -361,12 +344,7 @@ export async function p4changes(
 
   try {
     // Use tagged output (-G)
-    const result = await context.execute(
-      "changes",
-      effectiveArgs,
-      options,
-      true,
-    );
+    const result = await context.execute("changes", effectiveArgs, options);
 
     if (result.stderr) {
       context.outputChannel.appendLine(
@@ -385,7 +363,7 @@ export async function p4changes(
       // Other stderr might indicate permission issues, etc.
     }
 
-    // p4 changes -G output is an array of objects
+    // p4 changes output is an array of objects
     if (Array.isArray(result.parsedOutput)) {
       // Map the parsed objects to our P4ChangeSummary interface
       // Need to confirm field names from actual marshal output

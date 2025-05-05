@@ -82,12 +82,11 @@ export class RepositoryStateManager implements vscode.Disposable {
 
     try {
       // --- Fetch Data (populates this.files with placeholder URIs) ---
-      this.outputChannel.appendLine("Executing `p4 opened -G`...");
+      this.outputChannel.appendLine("Executing `p4 opened`...");
       const openedResult = await this.perforceService.execute(
         "opened",
         [],
         this.p4Options,
-        true,
       );
       const openedFiles = this.processP4Result(
         openedResult,
@@ -96,12 +95,11 @@ export class RepositoryStateManager implements vscode.Disposable {
       );
       openedFiles.forEach((f) => this.files.set(f.uri.toString(), f)); // Add to map using placeholder URI
 
-      this.outputChannel.appendLine("Executing `p4 status -G`...");
+      this.outputChannel.appendLine("Executing `p4 status`...");
       const statusResult = await this.perforceService.execute(
         "status",
         [],
         this.p4Options,
-        true,
       );
       const statusFiles = this.processP4Result(
         statusResult,
@@ -157,7 +155,6 @@ export class RepositoryStateManager implements vscode.Disposable {
         "changes",
         changesArgs,
         this.p4Options,
-        true,
       );
       const pendingChanges = this.processP4Result(
         changesResult,
@@ -174,12 +171,7 @@ export class RepositoryStateManager implements vscode.Disposable {
             `Fetching shelved files for changelist ${change.id}...`,
           );
           const promise = this.perforceService
-            .execute(
-              "describe",
-              ["-s", "-S", change.id, "-G"],
-              this.p4Options,
-              true,
-            )
+            .execute("describe", ["-s", "-S", change.id], this.p4Options)
             .then((result: P4Result) =>
               this.processP4Result(
                 result,

@@ -31,13 +31,8 @@ export async function p4where(
     `Executing \`p4 where ${depotOrClientPath}\`...`,
   );
   try {
-    // Execute 'p4 where' - no -G needed
-    const result = await context.execute(
-      "where",
-      [depotOrClientPath],
-      options,
-      false,
-    );
+    // Execute 'p4 where'
+    const result = await context.execute("where", [depotOrClientPath], options);
 
     if (result.stderr) {
       // 'p4 where' often reports errors like 'not in client view' to stderr
@@ -112,7 +107,7 @@ export async function p4where(
 }
 
 /**
- * Retrieves the list of files opened in the current workspace. Uses `p4 opened -G`.
+ * Retrieves the list of files opened in the current workspace. Uses `p4 opened`.
  * (Formerly PerforceService.getOpenedFiles)
  * @param context Object containing execute function and outputChannel.
  * @param options P4 options (especially cwd, P4CLIENT).
@@ -122,9 +117,9 @@ export async function p4opened(
   context: P4CommandContext,
   options: P4Options = {},
 ): Promise<P4OpenedFile[]> {
-  context.outputChannel.appendLine("Executing `p4 opened -G`...");
+  context.outputChannel.appendLine("Executing `p4 opened`...");
   try {
-    const result = await context.execute("opened", [], options, true);
+    const result = await context.execute("opened", [], options);
 
     if (
       result.stderr &&
@@ -132,7 +127,7 @@ export async function p4opened(
     ) {
       // Log unexpected stderr, but proceed if we got parsed output
       context.outputChannel.appendLine(
-        `Warning during \`p4 opened -G\`: ${result.stderr}`,
+        `Warning during \`p4 opened\`: ${result.stderr}`,
       );
     }
 
@@ -155,7 +150,7 @@ export async function p4opened(
         }),
       );
       context.outputChannel.appendLine(
-        `\`p4 opened -G\` found ${openedFiles.length} files.`,
+        `\`p4 opened\` found ${openedFiles.length} files.`,
       );
       return openedFiles;
     } else if (
@@ -164,19 +159,19 @@ export async function p4opened(
     ) {
       // This is not an error, just means no files are open
       context.outputChannel.appendLine(
-        "`p4 opened -G`: No files opened on this client.",
+        "`p4 opened`: No files opened on this client.",
       );
       return [];
     } else {
       // Handle cases where parsing might have failed or output was unexpected
       context.outputChannel.appendLine(
-        "`p4 opened -G\` did not return a valid array in parsedOutput.",
+        "`p4 opened\` did not return a valid array in parsedOutput.",
       );
       return [];
     }
   } catch (error: any) {
     context.outputChannel.appendLine(
-      `Error executing \`p4 opened -G\`: ${error.message}`,
+      `Error executing \`p4 opened\`: ${error.message}`,
     );
     console.error("Error executing p4 opened", error);
     return [];
@@ -184,7 +179,7 @@ export async function p4opened(
 }
 
 /**
- * Retrieves the status of files in the workspace compared to the depot. Uses `p4 status -G`.
+ * Retrieves the status of files in the workspace compared to the depot. Uses `p4 status`.
  * (Formerly PerforceService.getStatus)
  * @param context Object containing execute function and outputChannel.
  * @param options P4 options (cwd, P4CLIENT, etc.).
@@ -194,15 +189,15 @@ export async function p4status(
   context: P4CommandContext,
   options: P4Options = {},
 ): Promise<P4StatusFile[]> {
-  context.outputChannel.appendLine("Executing `p4 status -G`...");
+  context.outputChannel.appendLine("Executing `p4 status`...");
   try {
     // p4 status might need specific paths, but defaults to cwd if not specified
-    const result = await context.execute("status", [], options, true);
+    const result = await context.execute("status", [], options);
 
     if (result.stderr) {
       // Log stderr but potentially continue if there is parsed data
       context.outputChannel.appendLine(
-        `Warning/Info during \`p4 status -G\`: ${result.stderr}`,
+        `Warning/Info during \`p4 status\`: ${result.stderr}`,
       );
     }
 
@@ -219,20 +214,20 @@ export async function p4status(
         }),
       );
       context.outputChannel.appendLine(
-        `\`p4 status -G\` reported status for ${statusFiles.length} files.`,
+        `\`p4 status\` reported status for ${statusFiles.length} files.`,
       );
       return statusFiles;
     } else {
-      // p4 status with -G returns an empty list if nothing matches,
+      // p4 status with returns an empty list if nothing matches,
       // so an empty array is a valid successful result.
       context.outputChannel.appendLine(
-        "`p4 status -G`: No file statuses reported (or output was not an array).",
+        "`p4 status`: No file statuses reported (or output was not an array).",
       );
       return [];
     }
   } catch (error: any) {
     context.outputChannel.appendLine(
-      `Error executing \`p4 status -G\`: ${error.message}`,
+      `Error executing \`p4 status\`: ${error.message}`,
     );
     console.error("Error executing p4 status", error);
     // Decide if throwing or returning empty array is better
@@ -261,7 +256,7 @@ export async function p4add(
   try {
     // Specify the file path as an argument
     // No tagged output needed for basic add
-    const result = await context.execute("add", [filePath], options, false);
+    const result = await context.execute("add", [filePath], options);
 
     // Check stderr for potential warnings even if command succeeds
     if (result.stderr) {
@@ -308,7 +303,7 @@ export async function p4edit(
   try {
     // Specify the file path as an argument
     // No tagged output needed for basic edit
-    const result = await context.execute("edit", [filePath], options, false);
+    const result = await context.execute("edit", [filePath], options);
 
     // Check stderr for potential warnings even if command succeeds
     if (result.stderr) {
@@ -361,7 +356,7 @@ export async function p4delete(
   try {
     // Specify the file path as an argument
     // No tagged output needed for basic delete
-    const result = await context.execute("delete", [filePath], options, false);
+    const result = await context.execute("delete", [filePath], options);
 
     // Check stderr for potential warnings
     if (result.stderr) {
@@ -407,7 +402,7 @@ export async function p4revert(
     // Specify the file path as an argument
     // Use -k? -c? Check revert options if more control is needed.
     // No tagged output needed for basic revert
-    const result = await context.execute("revert", [filePath], options, false);
+    const result = await context.execute("revert", [filePath], options);
 
     // Check stderr for non-error info
     if (result.stderr) {
@@ -458,7 +453,7 @@ export async function p4sync(
   try {
     // Pass file paths as arguments if provided
     // Tagged output (-G) is available for sync but complex; skipping for now
-    const result = await context.execute("sync", filePaths, options, false);
+    const result = await context.execute("sync", filePaths, options);
 
     // Sync output can be verbose. Log stdout and stderr.
     if (result.stdout) {
@@ -519,7 +514,6 @@ export async function p4move(
       "move",
       [fromFilePath, toFilePath],
       options,
-      false,
     );
 
     // Check stderr for info/warnings
@@ -562,7 +556,7 @@ export async function p4newChangeSpec(
   try {
     // -o outputs the spec to stdout
     // No tagged output
-    const result = await context.execute("change", ["-o"], options, false);
+    const result = await context.execute("change", ["-o"], options);
 
     if (result.stderr) {
       // Log stderr as warning/info, but stdout should still have the spec
@@ -609,12 +603,7 @@ export async function p4editChangeSpec(
   );
   try {
     // -o outputs the spec to stdout
-    const result = await context.execute(
-      "change",
-      ["-o", changelist],
-      options,
-      false,
-    );
+    const result = await context.execute("change", ["-o", changelist], options);
 
     if (result.stderr) {
       context.outputChannel.appendLine(
@@ -668,13 +657,7 @@ export async function p4saveChangeSpec(
   context.outputChannel.appendLine("Executing `p4 change -i`...");
   try {
     // Pass the spec string as standard input
-    const result = await context.execute(
-      "change",
-      ["-i"],
-      options,
-      false,
-      specString,
-    );
+    const result = await context.execute("change", ["-i"], options, specString);
 
     // Successful save typically outputs "Change X created." or "Change X updated." to stdout.
     // Stderr might contain warnings or info, e.g., about file validation.
@@ -745,7 +728,7 @@ export async function p4submit(
 
   try {
     // Submit doesn't typically use tagged output, but output can be complex (locking, triggers, errors)
-    const result = await context.execute("submit", args, options, false);
+    const result = await context.execute("submit", args, options);
 
     // Submit output varies greatly depending on success, failure, triggers, etc.
     // Successful submit usually indicates submitted change number in stderr/stdout.
@@ -811,7 +794,7 @@ export async function p4submit(
 }
 
 /**
- * Describes a pending or submitted changelist. Uses `p4 describe -G <changelist>`.
+ * Describes a pending or submitted changelist. Uses `p4 describe <changelist>`.
  * (Formerly PerforceService.describe)
  * @param context Object containing execute function and outputChannel.
  * @param changelist The changelist number to describe.
@@ -826,17 +809,12 @@ export async function p4describe(
   if (!changelist) {
     throw new Error("Changelist number must be provided for p4 describe.");
   }
-  const commandDesc = `p4 describe -G ${changelist}`;
+  const commandDesc = `p4 describe ${changelist}`;
   context.outputChannel.appendLine(`Executing \`${commandDesc}\`...`);
 
   try {
     // Use tagged output (-G) for easier parsing
-    const result = await context.execute(
-      "describe",
-      [changelist],
-      options,
-      true,
-    );
+    const result = await context.execute("describe", [changelist], options);
 
     if (result.stderr) {
       context.outputChannel.appendLine(
@@ -855,7 +833,7 @@ export async function p4describe(
 
     // The parsedOutput should contain the structured changelist data
     if (result.parsedOutput) {
-      // p4 describe -G usually returns a single object (or a list with one object)
+      // p4 describe usually returns a single object (or a list with one object)
       const descriptionData = Array.isArray(result.parsedOutput)
         ? result.parsedOutput[0]
         : result.parsedOutput;
@@ -867,7 +845,7 @@ export async function p4describe(
     } else {
       // Should not happen if command succeeded and stderr didn't indicate failure
       throw new Error(
-        `p4 describe -G ${changelist} succeeded but produced no parsed output.`,
+        `p4 describe ${changelist} succeeded but produced no parsed output.`,
       );
     }
   } catch (error: any) {
@@ -905,8 +883,8 @@ export async function p4diff2(
   context.outputChannel.appendLine(`Executing \`${commandDesc}\`...`);
 
   try {
-    // Diff output is typically consumed raw, so no -G
-    const result = await context.execute("diff2", args, options, false);
+    // Diff output is typically consumed raw, so no
+    const result = await context.execute("diff2", args, options);
 
     // Diff commands often report differences via exit codes but also stdout/stderr.
     // 'no differences' might be reported to stderr but is not an error.
@@ -969,7 +947,7 @@ export async function p4resolve(
   try {
     // Resolve has no tagged output
     // Output needs careful parsing to understand what happened (merged, yours, theirs, skipped, needs merge tool)
-    const result = await context.execute("resolve", args, options, false);
+    const result = await context.execute("resolve", args, options);
 
     // Both stdout and stderr can contain important information for resolve
     const output = `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`;

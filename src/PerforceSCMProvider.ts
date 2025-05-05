@@ -783,12 +783,7 @@ export class PerforceSCMProvider implements vscode.Disposable {
 
     try {
       // Use execute directly, no tagged output needed/helpful for p4 info
-      const result = await this._perforceService.execute(
-        "info",
-        [],
-        p4Options,
-        false,
-      ); // Explicitly set tagged=false
+      const result = await this._perforceService.execute("info", [], p4Options); // Explicitly set tagged=false
       const stdout = result.stdout;
 
       // Parse the output using regex

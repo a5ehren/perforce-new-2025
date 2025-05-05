@@ -130,7 +130,6 @@ export async function activate(context: vscode.ExtensionContext) {
           "login",
           [],
           p4Options,
-          false,
           password,
         );
         outputChannel.appendLine(`p4 login stdout: ${result.stdout}`);

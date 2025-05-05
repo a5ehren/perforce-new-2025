@@ -3429,13 +3429,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ieee754@npm:^1.1.8":
-  version: 1.2.1
-  resolution: "ieee754@npm:1.2.1"
-  checksum: 10c0/b0782ef5e0935b9f12883a2e2aa37baa75da6e66ce6515c168697b42160807d9330de9a32ec1ed73149aea02e0d822e572bca6f1e22bdcbd2149e13b050b17bb
-  languageName: node
-  linkType: hard
-
 "ignore@npm:^5.2.0, ignore@npm:^5.3.1":
   version: 5.3.2
   resolution: "ignore@npm:5.3.2"
@@ -5295,7 +5288,6 @@ __metadata:
     mocha: "npm:11.2.2"
     npm-run-all: "npm:^4.1.5"
     prettier: "npm:^3.5.3"
-    py-marshal: "npm:^1.0.5"
     ts-jest: "npm:^29.3.2"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.8.3"
@@ -5451,15 +5443,6 @@ __metadata:
   version: 6.1.0
   resolution: "pure-rand@npm:6.1.0"
   checksum: 10c0/1abe217897bf74dcb3a0c9aba3555fe975023147b48db540aa2faf507aee91c03bf54f6aef0eb2bf59cc259a16d06b28eca37f0dc426d94f4692aeff02fb0e65
-  languageName: node
-  linkType: hard
-
-"py-marshal@npm:^1.0.5":
-  version: 1.0.5
-  resolution: "py-marshal@npm:1.0.5"
-  dependencies:
-    ieee754: "npm:^1.1.8"
-  checksum: 10c0/688387766726c2a21ba7c37b93a049c6a62f011d241bbc374a7b25b3034c6b4f6e5a74f0b2129a0fbc95e5872fcea02f0bf33d8985cc2614999d00b8b655f4f9
   languageName: node
   linkType: hard
 

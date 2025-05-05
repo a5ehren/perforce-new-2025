@@ -29,12 +29,7 @@ export async function p4shelve(
 
   try {
     // Shelve output can indicate success, warnings, or errors
-    const result = await context.execute(
-      "shelve",
-      effectiveArgs,
-      options,
-      false,
-    );
+    const result = await context.execute("shelve", effectiveArgs, options);
 
     // Check stdout/stderr for success/failure indicators
     if (result.stderr) {
@@ -113,12 +108,7 @@ export async function p4unshelve(
 
   try {
     // Unshelve output indicates files being unshelved, potential conflicts, etc.
-    const result = await context.execute(
-      "unshelve",
-      effectiveArgs,
-      options,
-      false,
-    );
+    const result = await context.execute("unshelve", effectiveArgs, options);
 
     // Check stdout/stderr for success/failure/conflict indicators
     if (result.stderr) {

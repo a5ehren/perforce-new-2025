@@ -136,7 +136,6 @@ export type ExecuteFunction = (
   command: string,
   args?: string[],
   options?: P4Options,
-  useTaggedOutput?: boolean,
   input?: string,
 ) => Promise<P4Result>;
 

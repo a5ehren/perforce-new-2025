@@ -37,7 +37,7 @@ export async function p4fixJob(
 
   try {
     // No tagged output for fix
-    const result = await context.execute("fix", args, options, false);
+    const result = await context.execute("fix", args, options);
 
     // Check output - success message is usually "Job <jobId> fixed by change <changelist>"
     // or "Job <jobId> un-fixed for change <changelist>"
@@ -123,7 +123,7 @@ export async function p4job(
 
   try {
     // Job spec is output raw, no -G
-    const result = await context.execute("job", args, options, false);
+    const result = await context.execute("job", args, options);
 
     if (result.stderr) {
       context.outputChannel.appendLine(
@@ -162,17 +162,12 @@ export async function p4jobs(
   options: P4Options = {},
   args: string[] = [],
 ): Promise<P4JobSummary[]> {
-  // Ensure -G is always used for parsing, add it if not present in custom args
   const effectiveArgs = [...args];
-  if (!effectiveArgs.includes("-G")) {
-    effectiveArgs.unshift("-G");
-  }
   const commandDesc = `p4 jobs ${effectiveArgs.join(" ")}`;
   context.outputChannel.appendLine(`Executing \`${commandDesc}\`...`);
 
   try {
-    // Use tagged output (-G)
-    const result = await context.execute("jobs", effectiveArgs, options, true);
+    const result = await context.execute("jobs", effectiveArgs, options);
 
     if (result.stderr) {
       context.outputChannel.appendLine(
@@ -187,7 +182,7 @@ export async function p4jobs(
       }
     }
 
-    // p4 jobs -G output is an array of objects
+    // p4 jobs output is an array of objects
     if (Array.isArray(result.parsedOutput)) {
       // Map the parsed objects to our P4JobSummary interface
       // Field names often start with uppercase - confirm from marshal output

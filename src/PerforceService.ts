@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import * as childProcess from "child_process";
-const marshal = require("py-marshal"); // Import the parser library
 
 // Import necessary types from the new file
 import { P4Options, P4Result } from "./p4/p4Types";
@@ -40,33 +39,23 @@ export class PerforceService implements vscode.Disposable {
    * @param command The p4 command (e.g., 'edit', 'info').
    * @param args Array of arguments for the command.
    * @param options P4 environment options (P4USER, P4CLIENT, etc.) and cwd.
-   * @param useTaggedOutput If true, attempts to use '-G' for tagged output.
    * @param input Standard input to pass to the p4 command (e.g., for 'p4 change -i').
    */
   public async execute(
     command: string,
     args: string[] = [],
     options: P4Options = {},
-    useTaggedOutput = false,
     input?: string,
   ): Promise<P4Result> {
     this.logCommand(command, args, options, input);
 
     const effectiveArgs = [...args];
-    let requiresPythonParsing = false;
-
-    if (useTaggedOutput) {
-      // p4 -G marshals output as Python objects. We'll need to parse this.
-      effectiveArgs.unshift("-G");
-      requiresPythonParsing = true;
-    }
 
     try {
       const result = await this.spawnP4Process(
         command,
         effectiveArgs,
         options,
-        useTaggedOutput,
         input,
       );
 
@@ -75,25 +64,6 @@ export class PerforceService implements vscode.Disposable {
       this.logOutput(stdout, stderr);
 
       const p4Result: P4Result = { stdout, stderr };
-
-      if (requiresPythonParsing && stdout) {
-        try {
-          // Call the new parsing method
-          p4Result.parsedOutput = this.parseTaggedOutput(stdout);
-          if (this.debugMode) {
-            this.outputChannel.appendLine(
-              `Parsed Tagged Output (${command}): ${JSON.stringify(p4Result.parsedOutput, null, 2).substring(0, 1000)}...`,
-            );
-          }
-        } catch (parseError: any) {
-          this.outputChannel.appendLine(
-            `Error parsing tagged output for command '${command}': ${parseError.message}`,
-          );
-          console.error("Tagged output parse error:", parseError);
-          // Keep raw stdout, but log the error. Caller can decide how to handle.
-          // Alternatively, could re-throw or add an error flag to P4Result.
-        }
-      }
 
       return p4Result;
     } catch (error: any) {
@@ -112,7 +82,6 @@ export class PerforceService implements vscode.Disposable {
    * @param command The p4 command (e.g., 'edit', 'info')
    * @param args Array of arguments for the command
    * @param options P4 environment options (P4USER, P4CLIENT, etc.) and cwd
-   * @param useTaggedOutput If true, adds -G flag for tagged output
    * @param input Optional standard input to pass to the p4 command
    * @returns A promise that resolves to a P4Result object
    */
@@ -120,7 +89,6 @@ export class PerforceService implements vscode.Disposable {
     command: string,
     args: string[] = [],
     options: P4Options = {},
-    useTaggedOutput = false,
     input?: string,
   ): Promise<P4Result> {
     // Log the command being executed
@@ -128,13 +96,6 @@ export class PerforceService implements vscode.Disposable {
 
     // Copy args to avoid modifying the original array
     const effectiveArgs = [...args];
-    let requiresPythonParsing = false;
-
-    // Add -G flag for tagged output if requested
-    if (useTaggedOutput) {
-      effectiveArgs.unshift("-G");
-      requiresPythonParsing = true;
-    }
 
     // Determine the p4 executable path
     const p4Path = options.p4Path || this.p4PathSetting || "p4";
@@ -194,24 +155,6 @@ export class PerforceService implements vscode.Disposable {
             this.logError(command, effectiveArgs, stderr || errorMessage);
             reject(new Error(`${errorMessage}: ${stderr}`));
             return;
-          }
-
-          // Parse tagged output if requested
-          if (requiresPythonParsing && stdout) {
-            try {
-              p4Result.parsedOutput = this.parseTaggedOutput(stdout);
-              if (this.debugMode) {
-                this.outputChannel.appendLine(
-                  `Parsed Tagged Output (${command}): ${JSON.stringify(p4Result.parsedOutput, null, 2).substring(0, 1000)}...`,
-                );
-              }
-            } catch (parseError: any) {
-              this.outputChannel.appendLine(
-                `Error parsing tagged output for command '${command}': ${parseError.message}`,
-              );
-              console.error("Tagged output parse error:", parseError);
-              // Continue with the raw output
-            }
           }
 
           resolve(p4Result);
@@ -289,7 +232,7 @@ export class PerforceService implements vscode.Disposable {
     this.outputChannel.appendLine("Attempting p4 login...");
     try {
       // Execute p4 login. If a password is provided, pass it as stdin.
-      const result = await this.execute("login", [], options, false, password);
+      const result = await this.execute("login", [], options, password);
       if (result.stderr && !result.stderr.includes("User logged in")) {
         // Handle cases where login command succeeds (exit 0) but might show warnings
         this.outputChannel.appendLine(`Login attempt stderr: ${result.stderr}`);
@@ -327,7 +270,7 @@ export class PerforceService implements vscode.Disposable {
   }
 
   public async getInfo(options: P4Options = {}): Promise<P4Result> {
-    const result = await this.execute("info", [], options, true);
+    const result = await this.execute("info", [], options);
     // Parsing of result.parsedOutput would happen in the caller now
     return result;
   }
@@ -373,40 +316,6 @@ export class PerforceService implements vscode.Disposable {
       `ERROR running p4 ${command} ${args.join(" ")}:\n${stderr}`,
     );
     console.error(`Error running p4 ${command}`, args, stderr);
-  }
-
-  /**
-   * Parses the Python Marshalled output from p4 -G commands.
-   * @param stdout The raw standard output string from the p4 command.
-   * @returns The parsed JavaScript object/array.
-   * @throws Error if parsing fails.
-   */
-  private parseTaggedOutput(stdout: string): any {
-    if (!stdout) {
-      return null; // Or an empty array/object depending on expected output type?
-    }
-
-    try {
-      // Convert the string stdout to a Buffer for the marshal parser.
-      const buffer = Buffer.from(stdout, "latin1");
-
-      // Use the python-marshal library to load the data
-      const parsedData = marshal.load(buffer);
-
-      // P4 -G often returns a list of dictionaries.
-      return parsedData;
-    } catch (error: any) {
-      this.outputChannel.appendLine(`Marshal parsing failed: ${error.message}`);
-      console.error(
-        "Marshal parsing error:",
-        error,
-        "Input string (first 500 chars):",
-        stdout.substring(0, 500),
-      );
-      throw new Error(
-        `Failed to parse marshalled Python output: ${error.message}`,
-      );
-    }
   }
 
   /**
